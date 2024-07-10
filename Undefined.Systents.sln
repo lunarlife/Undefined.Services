@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Undefined.Systents", "Undefined.Systents\Undefined.Systents.csproj", "{DFC6DF07-982E-4905-A886-D7E62C57CF4F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DFC6DF07-982E-4905-A886-D7E62C57CF4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFC6DF07-982E-4905-A886-D7E62C57CF4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFC6DF07-982E-4905-A886-D7E62C57CF4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFC6DF07-982E-4905-A886-D7E62C57CF4F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

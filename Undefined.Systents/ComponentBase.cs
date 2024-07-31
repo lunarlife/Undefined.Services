@@ -1,11 +1,13 @@
-namespace Undefined.Systents.Components;
+namespace Undefined.Systents;
 
 public abstract class ComponentBase : IDisposable
 {
-    public Object Object { get; private set; }
+    public SObject Object { get; private set; }
     public Space Space => Object.Space;
 
-    internal void _InternalInit(Object obj)
+    public void Dispose() => Destroy();
+
+    private void Init(SObject obj)
     {
         Object = obj;
     }
@@ -17,7 +19,6 @@ public abstract class ComponentBase : IDisposable
     public void Destroy()
     {
         OnComponentDestroy();
+        Object._InternalDestroyComponent(this);
     }
-
-    public void Dispose() => Destroy();
 }

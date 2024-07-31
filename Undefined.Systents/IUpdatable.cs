@@ -1,6 +1,6 @@
 namespace Undefined.Systents;
 
-public class IUpdatable
+public interface IUpdatable
 {
-    
+    public void Update();
 }

@@ -1,11 +1,11 @@
 namespace Undefined.Systents;
 
-public abstract class System
+public interface ISystem
 {
-    public Space Space { get; private set; }
+    public Space Space { get; }
+}
 
-    internal void _InternalInit(Space space)
-    {
-        Space = space;
-    }
+public abstract class SystemBase : ISystem
+{
+    public Space Space { get; }
 }

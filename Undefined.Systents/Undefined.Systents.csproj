@@ -5,6 +5,11 @@
         <Nullable>enable</Nullable>
         <LangVersion>preview</LangVersion>
         <TargetFrameworks>net7.0;net8.0;net9.0;netstandard2.1</TargetFrameworks>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Title>Undefined.Systents</Title>
+        <Copyright>Copyright © LunarLife 2024</Copyright>
+        <PackageProjectUrl>ttps://github.com/lunarlife/Undefined.Systents</PackageProjectUrl>
+        <RepositoryUrl>ttps://github.com/lunarlife/Undefined.Systents</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>

@@ -10,11 +10,14 @@
         <Copyright>Copyright © LunarLife 2024</Copyright>
         <PackageProjectUrl>ttps://github.com/lunarlife/Undefined.Systents</PackageProjectUrl>
         <RepositoryUrl>ttps://github.com/lunarlife/Undefined.Systents</RepositoryUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Undefined.Events" Version="1.0.4"/>
         <PackageReference Include="Undefined.Verify" Version="2.0.0"/>
     </ItemGroup>
-
+    <ItemGroup>
+        <None Include="../LICENSE" Pack="true" PackagePath=""/>
+    </ItemGroup>
 </Project>

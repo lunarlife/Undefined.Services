@@ -1,6 +1,6 @@
 using Undefined.Verify;
 
-namespace Undefined.Systents;
+namespace Undefined.Services;
 
 public class SObject : IDisposable
 {
@@ -19,9 +19,9 @@ public class SObject : IDisposable
         }
     }
 
-    public Space Space { get; }
+    public ServicesSpace Space { get; }
 
-    internal SObject(Space space)
+    internal SObject(ServicesSpace space)
     {
         Space = space;
         foreach (var type in space.DefaultComponents) AddComponentInternal(type);

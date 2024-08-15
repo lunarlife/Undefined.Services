@@ -1,10 +1,8 @@
 using System.Collections;
 
-namespace Undefined.Systents.Filters;
+namespace Undefined.Services;
 
-internal interface IFilter
-{
-}
+internal interface IFilter;
 
 public readonly struct Filter<T> : IFilter, IReadOnlyList<T> where T : ComponentBase
 {

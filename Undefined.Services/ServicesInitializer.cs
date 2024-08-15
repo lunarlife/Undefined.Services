@@ -1,51 +1,50 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using Undefined.Systents.Exceptions;
-using Undefined.Systents.Filters;
+using Undefined.Services.Exceptions;
 
-namespace Undefined.Systents;
+namespace Undefined.Services;
 
-public delegate SystemBase SystemInstanceFunc(Space space);
+public delegate ServiceBase ServiceInstanceFunc(ServicesSpace space);
 
-public delegate void SystemUpdateFunc(SystemBase system);
+public delegate void ServiceUpdateFunc(ServiceBase service);
 
-internal class SystemsInitializer
+internal class ServicesInitializer
 {
-    private static readonly MethodInfo InitializerSystemDisposeMethod =
-        typeof(SystemsInitializer).GetMethod(nameof(DisposeSystem), BindingFlags.Static | BindingFlags.NonPublic)!;
+    private static readonly MethodInfo ServiceDestroyMethod =
+        typeof(ServiceBase).GetMethod("Destroy", BindingFlags.Public | BindingFlags.Instance)!;
 
-    private static readonly MethodInfo SpaceSystemInstanceMethod =
-        typeof(Space).GetMethod("_InternalInstanceSystem", BindingFlags.Instance | BindingFlags.NonPublic)!;
+    private static readonly MethodInfo SpaceServiceInstanceMethod =
+        typeof(ServicesSpace).GetMethod("_InternalInstanceService", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
     private static readonly MethodInfo SpaceGetFilterMethod =
-        typeof(Space).GetMethod("_InternalGetFilter", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        typeof(ServicesSpace).GetMethod("_InternalGetFilter", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
-    private static readonly FieldInfo SystemSpaceField =
-        typeof(SystemBase).GetField("<Space>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!;
+    private static readonly FieldInfo ServiceSpaceField =
+        typeof(ServiceBase).GetField("<Space>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
     private static readonly FieldInfo FilterListField =
         typeof(Filter<>).GetField("_list", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
-    private static readonly MethodInfo SpaceGetSystemMethod = typeof(Space).GetMethod(
-        "_InternalGetSystem",
+    private static readonly MethodInfo SpaceGetServiceMethod = typeof(ServicesSpace).GetMethod(
+        "_InternalGetService",
         BindingFlags.NonPublic | BindingFlags.Instance)!;
 
-    private readonly Dictionary<Type, SystemUpdateFunc> _systemsUpdaters = [];
+    private readonly Dictionary<Type, ServiceUpdateFunc> _servicesUpdaters = [];
 
-    public SystemInstanceFunc CreateSystemInitializer(Space space, Type type,
-        SystemScope scope)
+    public ServiceInstanceFunc CreateServiceInitializer(ServicesSpace space, Type type,
+        Scope scope)
     {
         if (type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                 .FirstOrDefault(c => c.GetParameters().Length == 0) is not { } ctor)
-            throw new SpaceException($"System type {type.Name} does not have an empty constructor.");
-        SystemInstanceFunc func;
+            throw new SpaceException($"Service type {type.Name} does not have an empty constructor.");
+        ServiceInstanceFunc func;
         var updateFields = new List<FieldData>();
         switch (scope)
         {
-            case SystemScope.Instance:
+            case Scope.Singleton:
             {
-                var system = (SystemBase)RuntimeHelpers.GetUninitializedObject(type);
+                var service = (ServiceBase)RuntimeHelpers.GetUninitializedObject(type);
                 var fields = IterateFields(space, type).ToArray();
                 foreach (var data in fields)
                 {
@@ -56,8 +55,8 @@ internal class SystemsInitializer
                 func = initSpace =>
                 {
                     // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-                    if (system.Space is not null) return system;
-                    SystemSpaceField.SetValue(system, initSpace);
+                    if (service.Space is not null) return service;
+                    ServiceSpaceField.SetValue(service, initSpace);
                     foreach (var data in fields)
                     {
                         var field = data.Field;
@@ -67,26 +66,34 @@ internal class SystemsInitializer
                         if (data.IsFilter)
                         {
                             var filter = initSpace._InternalGetFilter(field.FieldType.GetGenericArguments().First());
-                            field.SetValue(system,
+                            field.SetValue(service,
                                 GetFilterConstructor(field.FieldType).Invoke([filter]));
                         }
                         else
-                            field.SetValue(system, initSpace._InternalGetSystem(field.FieldType));
+                            field.SetValue(service, initSpace._InternalGetService(field.FieldType));
                     }
 
-                    ctor.Invoke(system, null);
-                    initSpace._InternalInstanceSystem(system);
-                    return system;
+                    try
+                    {
+                        ctor.Invoke(service, null);
+                    }
+                    catch (Exception e)
+                    {
+                        throw e is TargetInvocationException tie ? tie.InnerException ?? e : e;
+                    }
+
+                    initSpace._InternalInstanceService(service);
+                    return service;
                 };
                 break;
             }
-            case SystemScope.Factory:
+            case Scope.Factory:
             {
-                var method = new DynamicMethod($"{type.Name}_system_init", typeof(SystemBase), [typeof(Space)],
+                var method = new DynamicMethod($"{type.Name}_service_init", typeof(ServiceBase), [typeof(ServicesSpace)],
                     false);
                 var generator = method.GetILGenerator();
                 generator.DeclareLocal(type);
-                generator.DeclareLocal(typeof(SystemBase));
+                generator.DeclareLocal(typeof(ServiceBase));
 
                 generator.DeclareLocal(SpaceGetFilterMethod.ReturnType);
                 generator.DeclareLocal(typeof(IFilter));
@@ -97,9 +104,9 @@ internal class SystemsInitializer
                 generator.Emit(OpCodes.Stloc_0);
                 generator.Emit(OpCodes.Ldloc_0);
 
-                // set the Space property to system 
+                // set the Space property to service 
                 generator.Emit(OpCodes.Ldarg_0);
-                generator.Emit(OpCodes.Stfld, SystemSpaceField);
+                generator.Emit(OpCodes.Stfld, ServiceSpaceField);
 
 
                 // fill all fields
@@ -118,7 +125,7 @@ internal class SystemsInitializer
                         generator.EmitObj(field.FieldType.GetGenericArguments().First());
                         generator.Emit(OpCodes.Call, SpaceGetFilterMethod);
                         generator.Emit(OpCodes.Newobj,
-                            GetFilterConstructor(field.FieldType));
+                            GetFilterConstructor(field.FieldType)); 
                         generator.Emit(OpCodes.Stloc_2);
 
                         generator.Emit(OpCodes.Ldloc_0);
@@ -130,7 +137,7 @@ internal class SystemsInitializer
                     {
                         generator.Emit(OpCodes.Ldarg_0);
                         generator.EmitObj(field.FieldType);
-                        generator.Emit(OpCodes.Call, SpaceGetSystemMethod);
+                        generator.Emit(OpCodes.Call, SpaceGetServiceMethod);
                         generator.Emit(OpCodes.Stloc_1);
                         generator.Emit(OpCodes.Ldloc_0);
                         generator.Emit(OpCodes.Ldloc_1);
@@ -145,11 +152,11 @@ internal class SystemsInitializer
                 // call the instance method in class Space
                 generator.Emit(OpCodes.Ldarg_0);
                 generator.Emit(OpCodes.Ldloc_0);
-                generator.Emit(OpCodes.Call, SpaceSystemInstanceMethod);
+                generator.Emit(OpCodes.Call, SpaceServiceInstanceMethod);
 
                 generator.Emit(OpCodes.Ldloc_0);
                 generator.Emit(OpCodes.Ret);
-                func = (SystemInstanceFunc)method.CreateDelegate(typeof(SystemInstanceFunc));
+                func = (ServiceInstanceFunc)method.CreateDelegate(typeof(ServiceInstanceFunc));
                 break;
             }
             default:
@@ -158,7 +165,7 @@ internal class SystemsInitializer
 
         if (updateFields.Count != 0)
         {
-            var updateMethod = new DynamicMethod($"{type.Name}_system_update", null, [typeof(SystemBase)],
+            var updateMethod = new DynamicMethod($"{type.Name}_service_update", null, [typeof(ServiceBase)],
                 false);
             var updateGenerator = updateMethod.GetILGenerator();
 
@@ -166,11 +173,11 @@ internal class SystemsInitializer
 
             updateGenerator.DeclareLocal(typeof(IFilter));
             updateGenerator.DeclareLocal(SpaceGetFilterMethod.ReturnType);
-            updateGenerator.DeclareLocal(typeof(Space));
-            updateGenerator.DeclareLocal(typeof(SystemBase));
+            updateGenerator.DeclareLocal(typeof(ServicesSpace));
+            updateGenerator.DeclareLocal(typeof(ServiceBase));
 
             updateGenerator.Emit(OpCodes.Ldarg_0);
-            updateGenerator.Emit(OpCodes.Ldfld, SystemSpaceField); // get space from system
+            updateGenerator.Emit(OpCodes.Ldfld, ServiceSpaceField); // get space from service
             updateGenerator.Emit(OpCodes.Stloc_2);
             foreach (var data in updateFields)
             {
@@ -192,11 +199,11 @@ internal class SystemsInitializer
                 {
                     updateGenerator.Emit(OpCodes.Ldarg_0);
                     updateGenerator.Emit(OpCodes.Ldfld, field);
-                    updateGenerator.Emit(OpCodes.Call, InitializerSystemDisposeMethod);
+                    updateGenerator.Emit(OpCodes.Call, ServiceDestroyMethod);
 
                     updateGenerator.Emit(OpCodes.Ldloc_2);
                     updateGenerator.EmitObj(field.FieldType);
-                    updateGenerator.Emit(OpCodes.Call, SpaceGetSystemMethod);
+                    updateGenerator.Emit(OpCodes.Call, SpaceGetServiceMethod);
                     updateGenerator.Emit(OpCodes.Stloc_3);
 
                     updateGenerator.Emit(OpCodes.Ldarg_0);
@@ -206,8 +213,8 @@ internal class SystemsInitializer
             }
 
             updateGenerator.Emit(OpCodes.Ret);
-            var updateFunc = (SystemUpdateFunc)updateMethod.CreateDelegate(typeof(SystemUpdateFunc));
-            _systemsUpdaters.Add(type, updateFunc);
+            var updateFunc = (ServiceUpdateFunc)updateMethod.CreateDelegate(typeof(ServiceUpdateFunc));
+            _servicesUpdaters.Add(type, updateFunc);
         }
 
         return func;
@@ -216,13 +223,13 @@ internal class SystemsInitializer
     private static ConstructorInfo GetFilterConstructor(Type type) =>
         type.GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance).First();
 
-    public bool TryGetSystemUpdateFunc(Type type, out SystemUpdateFunc? func) =>
-        _systemsUpdaters.TryGetValue(type, out func);
+    public bool TryGetServiceUpdateFunc(Type type, out ServiceUpdateFunc? func) =>
+        _servicesUpdaters.TryGetValue(type, out func);
 
-    private static void DisposeSystem(SystemBase? system)
+    internal static void DisposeService(ServiceBase? service)   
     {
-        system?.Space._InternalDisposeSystem(system);
-        switch (system)
+        service?.Space._InternalDisposeService(service);
+        switch (service)
         {
             case IDisposable disposable:
                 disposable.Dispose();
@@ -233,7 +240,7 @@ internal class SystemsInitializer
         }
     }
 
-    private static IEnumerable<FieldData> IterateFields(Space space, Type type)
+    private static IEnumerable<FieldData> IterateFields(ServicesSpace space, Type type)
     {
         var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public |
                                     BindingFlags.Static);
@@ -249,13 +256,13 @@ internal class SystemsInitializer
                 throw new FilterException(
                     $"Fill type {FillType.Update} is not allowed without interface {nameof(IUpdatable)} [Field {field.Name} in type {type.Name}].");
 
-            if (space.HasDeclaredSystem(fieldType))
+            if (space.HasDeclaredService(fieldType))
                 yield return new FieldData(field, attribute.Type, false);
             else if (typeof(IFilter).IsAssignableFrom(fieldType))
                 yield return new FieldData(field, attribute.Type, true);
             else
                 throw new SpaceException(
-                    $"Fields with attribute {nameof(FillAttribute)} must be declared in {nameof(Space)} [Field {field.Name} in type {type.Name}].");
+                    $"Fields with attribute {nameof(FillAttribute)} must be declared in {nameof(ServicesSpace)} [Field {field.Name} in type {type.Name}].");
         }
     }
 

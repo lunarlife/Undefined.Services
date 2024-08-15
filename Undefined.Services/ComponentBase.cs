@@ -1,9 +1,9 @@
-namespace Undefined.Systents;
+namespace Undefined.Services;
 
 public abstract class ComponentBase : IDisposable
 {
     public SObject Object { get; private set; }
-    public Space Space => Object.Space;
+    public ServicesSpace Space => Object.Space;
 
     public void Dispose() => Destroy();
 

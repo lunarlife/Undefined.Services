@@ -1,4 +1,4 @@
-namespace Undefined.Systents.Exceptions;
+namespace Undefined.Services.Exceptions;
 
 public class FilterException : Exception
 {

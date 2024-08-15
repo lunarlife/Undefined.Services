@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace Undefined.Systents;
+namespace Undefined.Services;
 
 public class MultiList<T> : IList<T>, IReadOnlyList<T>
 {

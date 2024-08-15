@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Reflection.Emit;
-using Undefined.Systents.Exceptions;
+using Undefined.Services.Exceptions;
 
-namespace Undefined.Systents;
+namespace Undefined.Services;
 
 internal class ComponentsInitializer
 {

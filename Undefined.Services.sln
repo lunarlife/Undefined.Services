@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Undefined.Systents", "Undefined.Systents\Undefined.Systents.csproj", "{DFC6DF07-982E-4905-A886-D7E62C57CF4F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Undefined.Services", "Undefined.Services\Undefined.Services.csproj", "{DFC6DF07-982E-4905-A886-D7E62C57CF4F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

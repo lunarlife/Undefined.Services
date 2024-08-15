@@ -1,4 +1,4 @@
-namespace Undefined.Systents;
+namespace Undefined.Services;
 
 public interface IUpdatable
 {

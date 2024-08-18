@@ -1,6 +1,6 @@
 using Undefined.Events;
 using Undefined.Services.Exceptions;
-using Undefined.Verify;
+using Undefined.Verifying;
 
 namespace Undefined.Services;
 
@@ -230,7 +230,7 @@ public class ServicesSpace : IDisposable
     {
         CheckIsNotDisposed();
         lock (_componentsLock)
-            Verifying.Argument(_allComponents.TryGetValue(component.GetType(), out var list) && list.Remove(component),
+            Verify.Argument(_allComponents.TryGetValue(component.GetType(), out var list) && list.Remove(component),
                 "Something was wrong.");
     }
 

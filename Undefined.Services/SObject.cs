@@ -1,4 +1,4 @@
-using Undefined.Verify;
+using Undefined.Verifying;
 
 namespace Undefined.Services;
 
@@ -39,7 +39,7 @@ public class SObject : IDisposable
     {
         lock (_componentLock)
         {
-            Verifying.Argument(!_componentsTypes.ContainsKey(type), $"Object already has component {type.Name}.");
+            Verify.Argument(!_componentsTypes.ContainsKey(type), $"Object already has component {type.Name}.");
             var component = Space._InternalDeclareComponent(this, type);
             _componentsTypes.Add(type, component);
             _components.Add(component);
@@ -61,18 +61,18 @@ public class SObject : IDisposable
 
     public ComponentBase GetComponent(Type type)
     {
-        Verifying.Argument(type is { IsAbstract: false, IsClass: true },
+        Verify.Argument(type is { IsAbstract: false, IsClass: true },
             $"Type must be not abstract class [Type {type.Name}].");
-        Verifying.Argument(_componentsTypes.TryGetValue(type, out var component),
+        Verify.Argument(_componentsTypes.TryGetValue(type, out var component),
             $"Object does not have a component {type.Name}.");
         return component!;
     }
 
     public ComponentBase AddComponent(Type type)
     {
-        Verifying.Argument(type is { IsAbstract: false, IsClass: true },
+        Verify.Argument(type is { IsAbstract: false, IsClass: true },
             $"Component must be not abstract class [Type {type.Name}].");
-        Verifying.Argument(ComponentBaseType.IsAssignableFrom(type),
+        Verify.Argument(ComponentBaseType.IsAssignableFrom(type),
             $"Type {type.Name} is not {nameof(ComponentBase)}.");
 
         return AddComponentInternal(type);
@@ -93,7 +93,7 @@ public class SObject : IDisposable
 
     internal void _InternalDestroyComponent(ComponentBase component)
     {
-        Verifying.Argument(component.Object == this, "Something was wrong.");
+        Verify.Argument(component.Object == this, "Something was wrong.");
         lock (_componentLock) _components.Remove(component);
     }
 }

@@ -8,8 +8,8 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Title>Undefined.Services</Title>
         <Copyright>Copyright © LunarLife 2024</Copyright>
-        <PackageProjectUrl>https://github.com/lunarlife/Undefined.Systents</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/lunarlife/Undefined.Systents</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/lunarlife/Undefined.Services</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/lunarlife/Undefined.Services</RepositoryUrl>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <Authors>LunarLife</Authors>
         <PackageTags>service system di dependency injection</PackageTags>
@@ -17,7 +17,7 @@
 
     <ItemGroup>
         <PackageReference Include="Undefined.Events" Version="1.0.4"/>
-        <PackageReference Include="Undefined.Verify" Version="2.0.0"/>
+        <PackageReference Include="Undefined.Verify" Version="3.0.0" />
     </ItemGroup>
     <ItemGroup>
         <None Include="../LICENSE" Pack="true" PackagePath=""/>

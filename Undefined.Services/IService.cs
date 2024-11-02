@@ -1,13 +1,8 @@
 namespace Undefined.Services;
 
-public interface IService
-{
-    public ServicesSpace Space { get; }
-    public bool IsDestroyed { get; }
-    public void Destroy();
-}
+public interface IService;
 
-public abstract class ServiceBase : IService
+/*public abstract class ServiceBase : IService
 {
     public ServicesSpace Space { get; }
     public bool IsDestroyed { get; private set; }
@@ -17,4 +12,4 @@ public abstract class ServiceBase : IService
         IsDestroyed = true;
         ServicesInitializer.DisposeService(this);
     }
-}
+}*/

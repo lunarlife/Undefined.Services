@@ -1,54 +1,39 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using Undefined.Services.Application;
 using Undefined.Services.Exceptions;
 
 namespace Undefined.Services;
 
-public delegate ServiceBase ServiceInstanceFunc(ServicesSpace space);
 
-public delegate void ServiceUpdateFunc(ServiceBase service);
+public delegate void ServiceUpdateFunc(IService service);
 
 internal class ServicesInitializer
 {
-    private static readonly MethodInfo ServiceDestroyMethod =
-        typeof(ServiceBase).GetMethod("Destroy", BindingFlags.Public | BindingFlags.Instance)!;
-
-    private static readonly MethodInfo SpaceServiceInstanceMethod =
-        typeof(ServicesSpace).GetMethod("_InternalInstanceService", BindingFlags.Instance | BindingFlags.NonPublic)!;
-
-    private static readonly MethodInfo SpaceGetFilterMethod =
-        typeof(ServicesSpace).GetMethod("_InternalGetFilter", BindingFlags.Instance | BindingFlags.NonPublic)!;
-
-    private static readonly FieldInfo ServiceSpaceField =
-        typeof(ServiceBase).GetField("<Space>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!;
-
-    private static readonly FieldInfo FilterListField =
-        typeof(Filter<>).GetField("_list", BindingFlags.Instance | BindingFlags.NonPublic)!;
-
-    private static readonly MethodInfo SpaceGetServiceMethod = typeof(ServicesSpace).GetMethod(
-        "_InternalGetService",
-        BindingFlags.NonPublic | BindingFlags.Instance)!;
-
     private readonly Dictionary<Type, ServiceUpdateFunc> _servicesUpdaters = [];
 
-    public ServiceInstanceFunc CreateServiceInitializer(ServicesSpace space, Type type,
-        Scope scope)
+
+    private static readonly MethodInfo InitializerDestroyServiceAndGetNewMethod = typeof(ServicesInitializer)
+        .GetMethod("DestroyServiceAndGetNew", BindingFlags.Public | BindingFlags.Static)!;
+
+    public ServiceInstallFunc CreateServiceInitializer(ApplicationSpace space, Type type,
+        ScopeOld scope)
     {
         if (type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                 .FirstOrDefault(c => c.GetParameters().Length == 0) is not { } ctor)
             throw new SpaceException($"Service type {type.Name} does not have an empty constructor.");
-        ServiceInstanceFunc func;
+        ServiceInstallFunc func;
         var updateFields = new List<FieldData>();
         switch (scope)
         {
-            case Scope.Singleton:
+            case ScopeOld.Singleton:
             {
-                var service = (ServiceBase)RuntimeHelpers.GetUninitializedObject(type);
+                var service = (IService)RuntimeHelpers.GetUninitializedObject(type);
                 var fields = IterateFields(space, type).ToArray();
                 foreach (var data in fields)
                 {
-                    if (data.FillType != FillType.Update) continue;
+                    if (data.FilterUpdateType != FilterUpdateType.EveryTick) continue;
                     updateFields.Add(data);
                 }
 
@@ -60,7 +45,7 @@ internal class ServicesInitializer
                     foreach (var data in fields)
                     {
                         var field = data.Field;
-                        if (data.FillType == FillType.Update)
+                        if (data.FilterUpdateType == FilterUpdateType.EveryTick)
                             continue;
 
                         if (data.IsFilter)
@@ -87,13 +72,13 @@ internal class ServicesInitializer
                 };
                 break;
             }
-            case Scope.Factory:
+            case ScopeOld.Factory:
             {
-                var method = new DynamicMethod($"{type.Name}_service_init", typeof(ServiceBase), [typeof(ServicesSpace)],
+                var method = new DynamicMethod($"{type.Name}_service_init", typeof(IService), [typeof(ApplicationSpace)],
                     false);
                 var generator = method.GetILGenerator();
                 generator.DeclareLocal(type);
-                generator.DeclareLocal(typeof(ServiceBase));
+                generator.DeclareLocal(typeof(IService));
 
                 generator.DeclareLocal(SpaceGetFilterMethod.ReturnType);
                 generator.DeclareLocal(typeof(IFilter));
@@ -113,7 +98,7 @@ internal class ServicesInitializer
                 foreach (var data in IterateFields(space, type))
                 {
                     var field = data.Field;
-                    if (data.FillType == FillType.Update)
+                    if (data.FilterUpdateType == FilterUpdateType.EveryTick)
                     {
                         updateFields.Add(data);
                         continue;
@@ -125,7 +110,7 @@ internal class ServicesInitializer
                         generator.EmitObj(field.FieldType.GetGenericArguments().First());
                         generator.Emit(OpCodes.Call, SpaceGetFilterMethod);
                         generator.Emit(OpCodes.Newobj,
-                            GetFilterConstructor(field.FieldType)); 
+                            GetFilterConstructor(field.FieldType));
                         generator.Emit(OpCodes.Stloc_2);
 
                         generator.Emit(OpCodes.Ldloc_0);
@@ -156,7 +141,7 @@ internal class ServicesInitializer
 
                 generator.Emit(OpCodes.Ldloc_0);
                 generator.Emit(OpCodes.Ret);
-                func = (ServiceInstanceFunc)method.CreateDelegate(typeof(ServiceInstanceFunc));
+                func = (ServiceInstallFunc)method.CreateDelegate(typeof(ServiceInstallFunc));
                 break;
             }
             default:
@@ -165,7 +150,8 @@ internal class ServicesInitializer
 
         if (updateFields.Count != 0)
         {
-            var updateMethod = new DynamicMethod($"{type.Name}_service_update", null, [typeof(ServiceBase)],
+            var updateMethod = new DynamicMethod($"{type.Name}_service_update", null,
+                [typeof(IService), typeof(ApplicationSpace)],
                 false);
             var updateGenerator = updateMethod.GetILGenerator();
 
@@ -173,18 +159,13 @@ internal class ServicesInitializer
 
             updateGenerator.DeclareLocal(typeof(IFilter));
             updateGenerator.DeclareLocal(SpaceGetFilterMethod.ReturnType);
-            updateGenerator.DeclareLocal(typeof(ServicesSpace));
-            updateGenerator.DeclareLocal(typeof(ServiceBase));
-
-            updateGenerator.Emit(OpCodes.Ldarg_0);
-            updateGenerator.Emit(OpCodes.Ldfld, ServiceSpaceField); // get space from service
-            updateGenerator.Emit(OpCodes.Stloc_2);
+            updateGenerator.DeclareLocal(typeof(IService));
             foreach (var data in updateFields)
             {
                 var field = data.Field;
                 if (data.IsFilter)
                 {
-                    updateGenerator.Emit(OpCodes.Ldloc_2);
+                    updateGenerator.Emit(OpCodes.Ldarg_1);
                     updateGenerator.EmitObj(field.FieldType.GetGenericArguments().First());
                     updateGenerator.Emit(OpCodes.Call, SpaceGetFilterMethod);
                     updateGenerator.Emit(OpCodes.Newobj,
@@ -199,22 +180,21 @@ internal class ServicesInitializer
                 {
                     updateGenerator.Emit(OpCodes.Ldarg_0);
                     updateGenerator.Emit(OpCodes.Ldfld, field);
-                    updateGenerator.Emit(OpCodes.Call, ServiceDestroyMethod);
-
-                    updateGenerator.Emit(OpCodes.Ldloc_2);
                     updateGenerator.EmitObj(field.FieldType);
-                    updateGenerator.Emit(OpCodes.Call, SpaceGetServiceMethod);
-                    updateGenerator.Emit(OpCodes.Stloc_3);
+                    updateGenerator.Emit(OpCodes.Call, InitializerDestroyServiceAndGetNewMethod);
+                    updateGenerator.Emit(OpCodes.Stloc_2);
 
                     updateGenerator.Emit(OpCodes.Ldarg_0);
-                    updateGenerator.Emit(OpCodes.Ldloc_3);
+                    updateGenerator.Emit(OpCodes.Ldloc_2);
                     updateGenerator.Emit(OpCodes.Stfld, field);
                 }
             }
 
             updateGenerator.Emit(OpCodes.Ret);
-            var updateFunc = (ServiceUpdateFunc)updateMethod.CreateDelegate(typeof(ServiceUpdateFunc));
-            _servicesUpdaters.Add(type, updateFunc);
+
+            var dg = (Action<IService, ApplicationSpace>)updateMethod.CreateDelegate(
+                typeof(Action<IService, ApplicationSpace>));
+            _servicesUpdaters.Add(type, service => dg(service, service.Space));
         }
 
         return func;
@@ -226,9 +206,19 @@ internal class ServicesInitializer
     public bool TryGetServiceUpdateFunc(Type type, out ServiceUpdateFunc? func) =>
         _servicesUpdaters.TryGetValue(type, out func);
 
-    internal static void DisposeService(ServiceBase? service)   
+    private static IService DestroyServiceAndGetNew(IService? service, Type type)
     {
-        service?.Space._InternalDisposeService(service);
+        DestroyService(service);
+        return service?.Space().GetService(type)?? throw new SpaceException("");
+    }
+
+    public static void DestroyService(IService? service)
+    {
+        if (service is not null)
+        {
+            service.Space().DestroyService(service);
+        }
+
         switch (service)
         {
             case IDisposable disposable:
@@ -240,42 +230,42 @@ internal class ServicesInitializer
         }
     }
 
-    private static IEnumerable<FieldData> IterateFields(ServicesSpace space, Type type)
+    private static IEnumerable<FieldData> IterateFields(ApplicationSpace space, Type type)
     {
         var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public |
                                     BindingFlags.Static);
         var isUpdatable = typeof(IUpdatable).IsAssignableFrom(type);
         foreach (var field in fields)
         {
-            if (field.GetCustomAttribute<FillAttribute>() is not { } attribute) continue;
+            if (field.GetCustomAttribute<FilterAttribute>() is not { } attribute) continue;
             if (field.IsStatic || !field.IsInitOnly || !field.IsPrivate)
                 throw new SpaceException(
-                    $"Fields with attribute {nameof(FillAttribute)} must be 'private readonly' [Field {field.Name} in type {type.Name}].");
+                    $"Fields with attribute {nameof(FilterAttribute)} must be 'private readonly' [Field {field.Name} in type {type.Name}].");
             var fieldType = field.FieldType;
-            if (!isUpdatable && attribute.Type == FillType.Update)
+            if (!isUpdatable && attribute.UpdateType == FilterUpdateType.EveryTick)
                 throw new FilterException(
-                    $"Fill type {FillType.Update} is not allowed without interface {nameof(IUpdatable)} [Field {field.Name} in type {type.Name}].");
+                    $"Fill type {FilterUpdateType.EveryTick} is not allowed without interface {nameof(IUpdatable)} [Field {field.Name} in type {type.Name}].");
 
             if (space.HasDeclaredService(fieldType))
-                yield return new FieldData(field, attribute.Type, false);
+                yield return new FieldData(field, attribute.UpdateType, false);
             else if (typeof(IFilter).IsAssignableFrom(fieldType))
-                yield return new FieldData(field, attribute.Type, true);
+                yield return new FieldData(field, attribute.UpdateType, true);
             else
                 throw new SpaceException(
-                    $"Fields with attribute {nameof(FillAttribute)} must be declared in {nameof(ServicesSpace)} [Field {field.Name} in type {type.Name}].");
+                    $"Fields with attribute {nameof(FilterAttribute)} must be declared in {nameof(ApplicationSpace)} [Field {field.Name} in type {type.Name}].");
         }
     }
 
     private struct FieldData
     {
         public FieldInfo Field { get; }
-        public FillType FillType { get; }
+        public FilterUpdateType FilterUpdateType { get; }
         public bool IsFilter { get; }
 
-        public FieldData(FieldInfo field, FillType fillType, bool isFilter)
+        public FieldData(FieldInfo field, FilterUpdateType filterUpdateType, bool isFilter)
         {
             Field = field;
-            FillType = fillType;
+            FilterUpdateType = filterUpdateType;
             IsFilter = isFilter;
         }
     }

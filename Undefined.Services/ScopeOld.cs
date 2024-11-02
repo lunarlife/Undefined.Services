@@ -1,6 +1,6 @@
 namespace Undefined.Services;
 
-public enum Scope
+public enum ScopeOld
 {
     Singleton,
     Factory,

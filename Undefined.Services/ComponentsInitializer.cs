@@ -1,25 +1,36 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Reflection.Emit;
+using Undefined.Services.Entities;
+using Undefined.Services.Entities.Components;
 using Undefined.Services.Exceptions;
 
 namespace Undefined.Services;
 
+internal record ComponentInitializeData(Entity Entity, bool IsDefault, bool IsImmutable);
+
 internal class ComponentsInitializer
+
 {
+    private delegate Component ComponentInitFunc(ComponentInitializeData obj);
+
+
     private static readonly MethodInfo ComponentInitMethod =
-        typeof(ComponentBase).GetMethod("Init", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        typeof(Component).GetMethod(Component.INITIALIZE_METHOD_NAME, BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+    private static readonly Type[] ComponentInitFuncParameters = [typeof(ComponentInitializeData)];
+
 
     private readonly ConcurrentDictionary<Type, ComponentInitFunc> _componentsTypes = [];
 
-    public ComponentBase CreateComponent(SObject obj, Type componentType) =>
+    public Component CreateComponent(Type componentType, ComponentInitializeData data) =>
         _componentsTypes.GetOrAdd(componentType, _ =>
         {
             if (componentType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                     .FirstOrDefault(c => c.GetParameters().Length == 0) is not { } ctor)
                 throw new ComponentException($"Component {componentType.Name} does not have empty constructor.");
-            var method = new DynamicMethod($"{componentType.Name}_component_init", typeof(ComponentBase),
-                [typeof(SObject)],
+            var method = new DynamicMethod($"component_init_{componentType.Name}", typeof(Component),
+                ComponentInitFuncParameters,
                 false);
             var generator = method.GetILGenerator();
 
@@ -37,7 +48,5 @@ internal class ComponentsInitializer
             generator.Emit(OpCodes.Ldloc_0);
             generator.Emit(OpCodes.Ret);
             return (ComponentInitFunc)method.CreateDelegate(typeof(ComponentInitFunc));
-        })(obj);
-
-    private delegate ComponentBase ComponentInitFunc(SObject obj);
+        })(data);
 }

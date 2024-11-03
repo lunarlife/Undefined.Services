@@ -54,25 +54,16 @@ public static class ServiceCollectionExtensions
     #endregion
 
 
-
     #region SCOPED
 
-     public static IServiceCollection AddScoped(this IServiceCollection services, Type serviceType,
+    public static IServiceCollection AddScoped(this IServiceCollection services, Type serviceType,
         Type implementationType) =>
         services.AddDescriptor(new ServiceDescriptor(ServiceLifetime.Scoped, serviceType, implementationType));
 
     public static IServiceCollection AddScoped(this IServiceCollection services, Type implementationType) =>
         services.AddDescriptor(new ServiceDescriptor(ServiceLifetime.Scoped, implementationType,
             implementationType));
-
-    public static IServiceCollection AddScoped(this IServiceCollection services, Type serviceType,
-        IService implementation) =>
-        services.AddDescriptor(new ServiceDescriptor(serviceType, implementation));
-
-    public static IServiceCollection AddScoped(this IServiceCollection services,
-        IService implementation) =>
-        services.AddDescriptor(new ServiceDescriptor(implementation));
-
+    
     public static IServiceCollection AddScoped(this IServiceCollection services, Type serviceType,
         Func<IServiceProvider, IService> implementationFactory) =>
         services.AddDescriptor(new ServiceDescriptor(ServiceLifetime.Scoped, serviceType, implementationFactory));
@@ -81,11 +72,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddScoped<TService>(this IServiceCollection services, Type implementationType)
         where TService : IService =>
         services.AddScoped(typeof(TService), implementationType);
-
-    public static IServiceCollection AddScoped<TService>(this IServiceCollection services,
-        TService implementation)
-        where TService : IService =>
-        services.AddScoped(typeof(TService), implementation);
+    
 
     public static IServiceCollection AddScoped<TImplementation>(this IServiceCollection services)
         where TImplementation : IService, new() =>
@@ -102,9 +89,42 @@ public static class ServiceCollectionExtensions
         where TService : IService =>
         services.AddScoped(typeof(TService), provider => implementationFactory(provider));
 
+    #endregion
+
     
+    #region TRANSIENT
+
+    public static IServiceCollection AddTransient(this IServiceCollection services, Type serviceType,
+        Type implementationType) =>
+        services.AddDescriptor(new ServiceDescriptor(ServiceLifetime.Transient, serviceType, implementationType));
+
+    public static IServiceCollection AddTransient(this IServiceCollection services, Type implementationType) =>
+        services.AddDescriptor(new ServiceDescriptor(ServiceLifetime.Transient, implementationType,
+            implementationType));
+
+    public static IServiceCollection AddTransient(this IServiceCollection services, Type serviceType,
+        Func<IServiceProvider, IService> implementationFactory) =>
+        services.AddDescriptor(new ServiceDescriptor(ServiceLifetime.Transient, serviceType, implementationFactory));
     
+    public static IServiceCollection AddTransient<TService>(this IServiceCollection services, Type implementationType)
+        where TService : IService =>
+        services.AddTransient(typeof(TService), implementationType);
     
+
+    public static IServiceCollection AddTransient<TImplementation>(this IServiceCollection services)
+        where TImplementation : IService, new() =>
+        services.AddTransient(typeof(TImplementation), _ => new TImplementation());
+
+    public static IServiceCollection AddTransient<TService, TImplementation>(this IServiceCollection services)
+        where TService : IService
+        where TImplementation : TService, new() =>
+        services.AddTransient(typeof(TService), _ => new TImplementation());
+
+
+    public static IServiceCollection AddTransient<TService>(this IServiceCollection services,
+        Func<IServiceProvider, TService> implementationFactory)
+        where TService : IService =>
+        services.AddTransient(typeof(TService), provider => implementationFactory(provider));
 
     #endregion
 

@@ -6,8 +6,8 @@ public class CoreScope : IServiceScope, IServiceProvider
 {
     private readonly ServiceProvider _rootProvider;
     private readonly bool _isRootScope;
-    
-    public IServiceProvider ServiceProvider { get; }
+
+    public IServiceProvider ServiceProvider => this;
 
     public CoreScope(ServiceProvider rootProvider, bool isRootScope)
     {

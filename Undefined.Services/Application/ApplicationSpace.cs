@@ -1,4 +1,4 @@
-using Undefined.Events;
+/*using Undefined.Events;
 using Undefined.Services.Declaration;
 using Undefined.Services.Entities;
 using Undefined.Services.Entities.Components;
@@ -305,4 +305,4 @@ public class ApplicationSpace : IDisposable
     public static ApplicationSpace Create<T, T1, T2>(IEventAccess<IEventArgs> onUpdate) where T : Component
         where T1 : Component
         where T2 : Component => new(onUpdate, [typeof(T), typeof(T1), typeof(T2)]);
-}
+}*/

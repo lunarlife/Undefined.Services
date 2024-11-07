@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
-using Undefined.Services.Application.Services.Scopes;
+using Undefined.Services.Application.Services.Lookup.Runtime.Injection;
 
-namespace Undefined.Services.Application.Services;
+namespace Undefined.Services.Application.Services.Extensions;
 
 public static class ServiceCollectionExtensions
 {
@@ -26,8 +26,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddSingleton(this IServiceCollection services, Type serviceType,
         Func<IServiceProvider, IService> implementationFactory) =>
         services.AddDescriptor(new ServiceDescriptor(ServiceLifetime.Singleton, serviceType, implementationFactory));
-
-
+    
     public static IServiceCollection AddSingleton<TService>(this IServiceCollection services, Type implementationType)
         where TService : IService =>
         services.AddSingleton(typeof(TService), implementationType);
@@ -39,12 +38,12 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddSingleton<TImplementation>(this IServiceCollection services)
         where TImplementation : IService, new() =>
-        services.AddSingleton(typeof(TImplementation), _ => new TImplementation());
+        services.AddSingleton(typeof(TImplementation), typeof(TImplementation));
 
     public static IServiceCollection AddSingleton<TService, TImplementation>(this IServiceCollection services)
         where TService : IService
         where TImplementation : TService, new() =>
-        services.AddSingleton(typeof(TService), _ => new TImplementation());
+        services.AddSingleton(typeof(TService), typeof(TImplementation));
 
     public static IServiceCollection AddSingleton<TService>(this IServiceCollection services,
         Func<IServiceProvider, TService> implementationFactory)
@@ -73,17 +72,15 @@ public static class ServiceCollectionExtensions
         where TService : IService =>
         services.AddScoped(typeof(TService), implementationType);
     
-
     public static IServiceCollection AddScoped<TImplementation>(this IServiceCollection services)
         where TImplementation : IService, new() =>
-        services.AddScoped(typeof(TImplementation), _ => new TImplementation());
+        services.AddScoped(typeof(TImplementation), typeof(TImplementation));
 
     public static IServiceCollection AddScoped<TService, TImplementation>(this IServiceCollection services)
         where TService : IService
         where TImplementation : TService, new() =>
-        services.AddScoped(typeof(TService), _ => new TImplementation());
-
-
+        services.AddScoped(typeof(TService), typeof(TImplementation));
+    
     public static IServiceCollection AddScoped<TService>(this IServiceCollection services,
         Func<IServiceProvider, TService> implementationFactory)
         where TService : IService =>
@@ -110,17 +107,15 @@ public static class ServiceCollectionExtensions
         where TService : IService =>
         services.AddTransient(typeof(TService), implementationType);
     
-
     public static IServiceCollection AddTransient<TImplementation>(this IServiceCollection services)
         where TImplementation : IService, new() =>
-        services.AddTransient(typeof(TImplementation), _ => new TImplementation());
+        services.AddTransient(typeof(TImplementation), typeof(TImplementation));
 
     public static IServiceCollection AddTransient<TService, TImplementation>(this IServiceCollection services)
         where TService : IService
         where TImplementation : TService, new() =>
-        services.AddTransient(typeof(TService), _ => new TImplementation());
-
-
+        services.AddTransient(typeof(TService), typeof(TImplementation));
+    
     public static IServiceCollection AddTransient<TService>(this IServiceCollection services,
         Func<IServiceProvider, TService> implementationFactory)
         where TService : IService =>
@@ -128,7 +123,8 @@ public static class ServiceCollectionExtensions
 
     #endregion
 
-    public static IServiceProvider BuildProvider(this IServiceCollection services) => new ServiceProvider(services);
+    public static IServiceProvider BuildProvider(this IServiceCollection services) => new ServiceProvider(services, new List<ServiceInjectorBase>());
+    public static IServiceProvider BuildProvider(this IServiceCollection services, ICollection<ServiceInjectorBase> injectors) => new ServiceProvider(services, injectors);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static IServiceCollection AddDescriptor(this IServiceCollection services, IServiceDescriptor descriptor)

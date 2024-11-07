@@ -1,5 +1,6 @@
 using Undefined.Services.Application;
 using Undefined.Services.Application.Services;
+using Undefined.Services.Application.Services.Extensions;
 using Undefined.Services.Entities.Templates.Builder;
 using Undefined.Services.Scopes;
 
@@ -15,7 +16,7 @@ public class _Test
 
         var services = new ServiceCollection();
         var provider = services.BuildProvider();
-        provider.CreateScope().ServiceProvider.
+       // provider.CreateScope().ServiceProvider.
     }
 }
 

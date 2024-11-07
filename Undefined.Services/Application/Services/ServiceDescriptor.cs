@@ -7,6 +7,7 @@ public class ServiceDescriptor : IServiceDescriptor
     public ServiceLifetime Lifetime { get; }
     public Type ServiceType { get; }
     public Type? ImplementationType { get; }
+    public IService? Implementation { get; }
 
     public Func<IServiceProvider, IService>? ImplementationFactory { get; }
     public bool ImplementationIsServiceType => ServiceType == ImplementationType;
@@ -24,14 +25,14 @@ public class ServiceDescriptor : IServiceDescriptor
         VerifyService(serviceType, implementation.GetType());
         Lifetime = ServiceLifetime.Singleton;
         ServiceType = serviceType;
-        ImplementationFactory = _ => implementation;
+        Implementation = implementation;
     }
 
     public ServiceDescriptor(IService implementation)
     {
         Lifetime = ServiceLifetime.Singleton;
         ServiceType = implementation.GetType();
-        ImplementationFactory = _ => implementation;
+        Implementation =  implementation;
     }
 
 

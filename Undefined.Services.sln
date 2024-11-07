@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Undefined.Services", "Undefined.Services\Undefined.Services.csproj", "{DFC6DF07-982E-4905-A886-D7E62C57CF4F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Undefined.Services.Tests", "Undefined.Services.Tests\Undefined.Services.Tests.csproj", "{A028A192-EABB-4528-9D7F-3D3B92B2983A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{DFC6DF07-982E-4905-A886-D7E62C57CF4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DFC6DF07-982E-4905-A886-D7E62C57CF4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DFC6DF07-982E-4905-A886-D7E62C57CF4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A028A192-EABB-4528-9D7F-3D3B92B2983A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A028A192-EABB-4528-9D7F-3D3B92B2983A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A028A192-EABB-4528-9D7F-3D3B92B2983A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A028A192-EABB-4528-9D7F-3D3B92B2983A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -7,7 +7,7 @@ using Undefined.Services.Events.Entities;
 
 namespace Undefined.Services.Entities;
 
-public class EntityContainer : IEntityContainer
+internal class EntityContainer : IEntityContainer
 {
     internal readonly ComponentsInitializer ComponentsInitializer = new();
 
@@ -67,13 +67,12 @@ public class EntityContainer : IEntityContainer
     {
         CheckIsNotDisposed();
         var e = InstantiateNewEntity();
-        if(e is Entity entity) entity._Initialize(this);
         _entityInstantiateEvent.Raise(new EntityInstantiateEventArgs(e));
         lock (_objectsLock) _entities.Add(e);
         return e;
     }
 
-    protected virtual IEntity InstantiateNewEntity() => new Entity();
+    protected virtual IEntity InstantiateNewEntity() => new Entity(this);
 
     public T Instantiate<T>() where T : Component, new()
     {
@@ -112,10 +111,10 @@ public class EntityContainer : IEntityContainer
         CheckIsNotDisposed();
         GC.SuppressFinalize(this);
         _isDisposed = true;
-        _updateListener.Detach();
-        lock (_servicesLock)
+        //_updateListener.Detach();
+        /*lock (_servicesLock)
             foreach (var service in _services)
                 if (service is IDisposable disposable)
-                    disposable.Dispose();
+                    disposable.Dispose();*/
     }
 }

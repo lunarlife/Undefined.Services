@@ -1,4 +1,4 @@
-using System.Reflection;
+/*using System.Reflection;
 using System.Reflection.Emit;
 using Undefined.Services.Application;
 using Undefined.Services.Exceptions;
@@ -155,4 +155,4 @@ public class DefaultServiceInstaller : IServiceInstaller
                     $"Fields with attribute {nameof(FilterAttribute)} must be declared in {nameof(ApplicationSpace)} [Field {field.Name} in type {type.Name}].");
         }
     }
-}
+}*/

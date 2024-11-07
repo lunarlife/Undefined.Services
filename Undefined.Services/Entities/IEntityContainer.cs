@@ -6,7 +6,7 @@ using Undefined.Services.Events.Entities;
 
 namespace Undefined.Services.Entities;
 
-public interface IEntityContainer : IDisposable
+public interface IEntityContainer : IService, IDisposable
 {
     public IReadOnlyList<IEntity> Entities { get; }
     public IEventAccess<EntityInstantiateEventArgs> OnEntityInstantiate { get; }

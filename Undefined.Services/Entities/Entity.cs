@@ -17,7 +17,7 @@ public class Entity : IEntity, IDisposable
 
     private readonly Event<EntityRemoveEventArgs> _onRemove = new();
     private readonly Event<ComponentAddEventArgs> _onComponentAdd = new();
-    private EntityContainer _container;
+    private readonly EntityContainer _container;
 
     public IEntityContainer Container => _container;
 
@@ -32,8 +32,7 @@ public class Entity : IEntity, IDisposable
     public IEventAccess<EntityRemoveEventArgs> OnRemove => _onRemove.Access;
     public IEventAccess<ComponentAddEventArgs> OnComponentAdd => _onComponentAdd.Access;
 
-
-    internal void _Initialize(EntityContainer container)
+    internal Entity(EntityContainer container)
     {
         _container = container;
         var template = container.InstantiateTemplate;
@@ -127,7 +126,7 @@ public class Entity : IEntity, IDisposable
 
     internal void _InternalDestroyComponent(IComponent component)
     {
-        Verify.Argument(component.Object == this, "Something was wrong.");
+        Verify.Argument(component.Entity == this, "Something was wrong.");
         lock (_componentsLock) _components.Remove(component);
     }
 
@@ -141,7 +140,7 @@ public class Entity : IEntity, IDisposable
                 component.Remove();
             }
 
-        Space._InternalDestroyObject(this);
+        //Container._InternalDestroyObject(this);
     }
 
     public void Dispose() => Remove();

@@ -18,4 +18,5 @@ public readonly struct ServiceId : IEquatable<ServiceId>
     public static bool operator ==(ServiceId left, ServiceId right) => left.Equals(right);
 
     public static bool operator !=(ServiceId left, ServiceId right) => !left.Equals(right);
+    public override string ToString() => ServiceType.Name;
 }

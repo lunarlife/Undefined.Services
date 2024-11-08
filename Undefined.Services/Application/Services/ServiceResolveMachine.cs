@@ -54,10 +54,7 @@ internal class ServiceResolveMachine : IServiceResolveMachine
         }
         else if (descriptor.HasImplementationType())
         {
-            var func = ServiceRuntimeFactoryGenerator.Instance.GetCachedOrCreateFactoryFunction(serviceType,
-                descriptor.ImplementationType!);
-            callSite = new FactoryCallSite(new CallSiteCache(descriptor.Lifetime, new ServiceId(serviceType)),
-                func);
+            callSite = new TypeCallSite(descriptor.Lifetime, descriptor.ServiceType, descriptor.ImplementationType!);
         }
 
         if (callSite is null) throw new InvalidServiceDescriptorException();

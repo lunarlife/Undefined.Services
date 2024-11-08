@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Undefined.Services.Application.Services.Lookup.Runtime.Injection;
 
 namespace Undefined.Services.Application.Services.Extensions;
 
@@ -123,8 +122,8 @@ public static class ServiceCollectionExtensions
 
     #endregion
 
-    public static IServiceProvider BuildProvider(this IServiceCollection services) => new ServiceProvider(services, new List<ServiceInjectorBase>());
-    public static IServiceProvider BuildProvider(this IServiceCollection services, ICollection<ServiceInjectorBase> injectors) => new ServiceProvider(services, injectors);
+    public static IServiceProvider BuildProvider(this IServiceCollection services) => new ServiceProvider(services, new List<ServiceDependencyResolver>());
+    public static IServiceProvider BuildProvider(this IServiceCollection services, ICollection<ServiceDependencyResolver> injectors) => new ServiceProvider(services, injectors);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static IServiceCollection AddDescriptor(this IServiceCollection services, IServiceDescriptor descriptor)

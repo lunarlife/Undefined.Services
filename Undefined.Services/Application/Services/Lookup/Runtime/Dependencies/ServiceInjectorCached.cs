@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace Undefined.Services.Application.Services.Lookup.Runtime.Injection;
+namespace Undefined.Services.Application.Services.Lookup.Runtime.Dependencies;
 
 public class ServiceInjectorCached
 {

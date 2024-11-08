@@ -1,42 +1,45 @@
 using Undefined.Services.Application.Services.Lookup;
-using Undefined.Services.Application.Services.Lookup.Runtime.Injection;
 using Undefined.Services.Application.Services.Scopes;
 
 namespace Undefined.Services.Application.Services;
 
-public class ServiceProvider : IServiceProvider
+internal class ServiceProvider : IServiceProvider
 {
-    private readonly CoreScope _rootScope;
     private readonly ServiceResolveMachine _resolveMachine;
     private readonly Dictionary<ServiceId, ServiceAccessor> _serviceAccessors = [];
     private readonly object _serviceCallSitesLock = new();
-    private ServiceProviderEngine _engine;
-    internal IServiceRuntimeInjector RuntimeInjector { get; }
+    private readonly ServiceProviderEngine _engine;
+    internal ServiceDependenciesResolverBuilder DependenciesResolverBuilder { get; }
 
-    public ServiceProvider(ICollection<IServiceDescriptor> services, ICollection<ServiceInjectorBase> injectors)
+    public CoreScope RootScope { get; }
+
+    public ServiceProvider(ICollection<IServiceDescriptor> services, ICollection<ServiceDependencyResolver> injectors)
     {
-        RuntimeInjector = new ServiceRuntimeInjector(injectors);
+        DependenciesResolverBuilder = new ServiceDependenciesResolverBuilder(injectors);
         _resolveMachine = new ServiceResolveMachine(services);
-        _engine = new CompileServiceProviderEngine();
-        _rootScope = new CoreScope(this, true);
+        RootScope = new CoreScope(this, true);
+        _engine = new CompileServiceProviderEngine(this);
     }
 
     public IServiceScope CreateScope() => new CoreScope(this, false);
 
     public bool TryGetService(Type serviceType, out IService? service)
     {
-        service = GetService(serviceType, _rootScope);
+        service = GetService(serviceType, RootScope);
         return service is not null;
     }
 
     internal IService? GetService(Type serviceType, CoreScope scope)
     {
         var id = new ServiceId(serviceType);
-        ServiceCallSite? callSite;
         lock (_serviceCallSitesLock)
         {
             if (!_serviceAccessors.TryGetValue(id, out var accessor))
-                _serviceAccessors.Add(id, callSite = );
+            {
+                var callSite = _resolveMachine.GetCachedOrCreateCallSite(id);
+                _serviceAccessors.Add(id,
+                    accessor = new ServiceAccessor(callSite, FirstRealizeService(_engine.RealizeService(callSite))));
+            }
         }
 
         var cache = callSite.Cache;
@@ -44,7 +47,7 @@ public class ServiceProvider : IServiceProvider
         switch (cache.CallSiteCachePlace)
         {
             case CallSiteCachePlace.Root:
-                service = _rootScope.Resolve(callSite, true);
+                service = RootScope.Resolve(callSite, true);
                 break;
             case CallSiteCachePlace.Scope:
                 service = scope.Resolve(callSite, true);
@@ -60,24 +63,52 @@ public class ServiceProvider : IServiceProvider
         return service;
     }
 
+    private Func<CoreScope, IService> FirstRealizeService(ServiceCallSite callSite,
+        Func<CoreScope, IService> realizeServiceFunc)
+    {
+        return scope =>
+        {
+            var place = callSite.Cache.CallSiteCachePlace;
+            Func<CoreScope, IService> realizedService;
+            if (place is CallSiteCachePlace.Root)
+            {
+                var cached = RootScope.AddOrGetCachedService(callSite, realizeServiceFunc);
+                realizedService = _ => cached;
+            }
+            else if (place == CallSiteCachePlace.Scope)
+            {
+                realizedService = sc => sc.AddOrGetCachedService(callSite, realizeServiceFunc);
+            }
+            else
+            {
+                realizedService = realizeServiceFunc;
+            }
+
+            _serviceAccessors[callSite.Cache.ServiceId].RealizedService = realizedService;
+            return realizedService(scope);
+        };
+    }
+
     private ServiceAccessor CreateServiceAccessor(ServiceId serviceId)
     {
         lock (_serviceCallSitesLock)
         {
             var callSite = _resolveMachine.GetCachedOrCreateCallSite(serviceId);
             Func<CoreScope, IService> realizedService;
-            if (callSite.Cache.CallSiteCachePlace == CallSiteCachePlace.Root)
-            {
-                var service = _rootScope.Resolve(callSite, true);
-                realizedService = _ => service;
-            }
-            else
-            {
-                realizedService = _engine.RealizeService(callSite);
-            }
+
+            realizedService = _engine.RealizeService(callSite);
+
 
             return new ServiceAccessor(callSite, realizedService);
         }
+    }
+
+    internal Func<CoreScope, IService> GetRealizedService(Type serviceType)
+    {
+        var id = new ServiceId(serviceType);
+        if (!_serviceAccessors.TryGetValue(id, out var accessor))
+            _serviceAccessors.Add(id, accessor = CreateServiceAccessor(id));
+        return accessor.RealizedService;
     }
 
     private class ServiceAccessor
@@ -89,6 +120,6 @@ public class ServiceProvider : IServiceProvider
         }
 
         public ServiceCallSite CallSite { get; }
-        public Func<CoreScope, IService> RealizedService { get; }
+        public Func<CoreScope, IService> RealizedService { get; set; }
     }
 }

@@ -28,6 +28,21 @@ internal class CoreScope : IServiceScope, IServiceProvider
         return service is not null;
     }
 
+
+    public IService AddOrGetCachedService(ServiceCallSite callSite, Func<CoreScope, IService> realizeService) =>
+        _resolvedServices.GetOrAdd(callSite.Cache.ServiceId,_ =>
+        {
+            var service = realizeService(this);
+            if (callSite.IsDisposable)
+                AddDisposable(service);
+            return service;
+        });
+
+    public void AddDisposable(IService disposable)
+    {
+        _disposables.Add(disposable);
+    }
+
     internal IService Resolve(ServiceCallSite callSite, bool cacheValue)
     {
         var cache = callSite.Cache;
@@ -45,22 +60,11 @@ internal class CoreScope : IServiceScope, IServiceProvider
             }
         }
         else service = ResolveNotCachedService(callSite);
-        
-        if (service is IDisposable or IAsyncDisposable) _disposables.Add(service);
-        
-        if (!isAlreadyResolved)
-            _rootProvider.RuntimeInjector.GetCachedOrCreateInjector(cache.ServiceId, service.GetType())(this, service);
-        return service;
-    }
 
-    private IService ResolveNotCachedService(ServiceCallSite callSite)
-    {
-        var service = callSite switch
-        {
-            ValueCallSite value => value.Service,
-            FactoryCallSite factory => factory.Factory(this),
-            _ => throw new ArgumentException($"Unknown service call site: {callSite}.")
-        };
+        if (service is IDisposable or IAsyncDisposable) _disposables.Add(service);
+
+        if (!isAlreadyResolved)
+            _rootProvider.DependenciesResolverBuilder.GetCachedOrCreateResolver(cache.ServiceId, service.GetType())(this, service);
         return service;
     }
 

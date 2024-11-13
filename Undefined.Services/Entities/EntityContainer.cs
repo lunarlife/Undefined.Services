@@ -1,7 +1,6 @@
 using Undefined.Events;
 using Undefined.Services.Entities.Components;
 using Undefined.Services.Entities.Templates;
-using Undefined.Services.Events;
 using Undefined.Services.Events.Components;
 using Undefined.Services.Events.Entities;
 

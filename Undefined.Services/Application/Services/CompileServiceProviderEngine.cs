@@ -1,4 +1,5 @@
 using Undefined.Services.Application.Services.Lookup;
+using Undefined.Services.Application.Services.Lookup.Runtime.Dependencies;
 using Undefined.Services.Application.Services.Lookup.Runtime.Factory;
 
 namespace Undefined.Services.Application.Services;
@@ -31,5 +32,5 @@ internal class CompileServiceProviderEngine : ServiceProviderEngine
     }
 
     private Action<CoreScope, IService> InjectService(ServiceId serviceId, Type implementationType) =>
-        _dependenciesResolverBuilder.GetCachedOrCreateResolver(serviceId, implementationType);
+        _dependenciesResolverBuilder.TryGetCachedOrBuildResolver(serviceId, implementationType, out TODO);
 }

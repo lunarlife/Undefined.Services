@@ -64,7 +64,7 @@ internal class CoreScope : IServiceScope, IServiceProvider
         if (service is IDisposable or IAsyncDisposable) _disposables.Add(service);
 
         if (!isAlreadyResolved)
-            _rootProvider.DependenciesResolverBuilder.GetCachedOrCreateResolver(cache.ServiceId, service.GetType())(this, service);
+            _rootProvider.DependenciesResolverBuilder.TryGetCachedOrBuildResolver(cache.ServiceId, service.GetType(), out TODO)(this, service);
         return service;
     }
 

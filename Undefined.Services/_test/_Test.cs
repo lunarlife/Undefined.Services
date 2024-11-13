@@ -1,22 +1,65 @@
-using Undefined.Services.Application;
-using Undefined.Services.Application.Services;
-using Undefined.Services.Application.Services.Extensions;
-using Undefined.Services.Entities.Templates.Builder;
-using Undefined.Services.Scopes;
+using System.Reflection.Emit;
+using Undefined.Services.Lambdas.Abstraction;
+using Undefined.Services.Lambdas.Abstraction.Blocks.Variables;
+using Undefined.Services.Lambdas.Abstraction.Handles;
+using Undefined.Services.Lambdas.Abstraction.Utils;
+using Undefined.Services.Lambdas.Abstraction.Values;
+using Undefined.Services.Lambdas.Declaration;
+using Undefined.Services.Lambdas.Declaration.Blocks.Variables;
+using Undefined.Services.Lambdas.Declaration.Compilation;
+using Undefined.Services.Lambdas.Declaration.Extensions.BlockBodyBuilder;
 
 namespace Undefined.Services._test;
 
 public class _Test
 {
-    public _Test()
+    public void LambdaBuild()
     {
-        var builder = new EntityTemplateBuilder();
-        builder.Component<TestComponent>().Preset(Console.WriteLine).Variable().Build().Build();
+        var stack = new Stack<int>();
+        LambdaBuilder.BuildLambda(lb => lb
+            .DefaultBlock(body =>
+            {
+                body.New(typeof(TestClass)).AssignTo(body.Vars().FirstOrDeclare);
+                //  body
+                //  .Invoke(method)  === IMethodHandleBuilder : IHandleBuilder
+                //  .Parameters(...)
+                //      === hasReturnValue ? value : finish  
+                //      
+                // .Build();
+                return body.Build();
+            })
+            .DefaultBlock(b => b.Build())
+            .Build()).Compile(new RuntimeMethodBodyConstructor());
 
+        IRuntimeValue<bool> value = default;
+        AddTest(value)
+    }
 
-        var services = new ServiceCollection();
-        var provider = services.BuildProvider();
-       // provider.CreateScope().ServiceProvider.
+    public void AddTest(Handle<bool> handle)
+    {
+        var value = handle.Handleable;
+        
+    }
+
+    public void Example()
+    {
+        {
+            var v = new TestClass();
+        }
+        {
+        }
+    }
+
+    public void TestAction(Action<ITest> test)
+    {
+    }
+}
+
+public static class EXT
+{
+    public static void ActionTest(this Action a)
+    {
+        Console.WriteLine(a);
     }
 }
 
@@ -24,6 +67,6 @@ public interface ITest : IService
 {
 }
 
-public class Test : ITest
+public class TestClass : ITest
 {
 }

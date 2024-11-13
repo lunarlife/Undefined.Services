@@ -1,5 +1,4 @@
 using Undefined.Events;
-using Undefined.Services.Events;
 using Undefined.Services.Events.Components;
 
 namespace Undefined.Services.Entities.Components;

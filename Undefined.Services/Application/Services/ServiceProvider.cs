@@ -1,4 +1,5 @@
 using Undefined.Services.Application.Services.Lookup;
+using Undefined.Services.Application.Services.Lookup.Runtime.Dependencies;
 using Undefined.Services.Application.Services.Scopes;
 
 namespace Undefined.Services.Application.Services;
@@ -13,9 +14,9 @@ internal class ServiceProvider : IServiceProvider
 
     public CoreScope RootScope { get; }
 
-    public ServiceProvider(ICollection<IServiceDescriptor> services, ICollection<ServiceDependencyResolver> injectors)
+    public ServiceProvider(ICollection<IServiceDescriptor> services, ICollection<ServiceDependencyResolverOLD> resolvers)
     {
-        DependenciesResolverBuilder = new ServiceDependenciesResolverBuilder(injectors);
+        DependenciesResolverBuilder = new ServiceDependenciesResolverBuilder(this, resolvers);
         _resolveMachine = new ServiceResolveMachine(services);
         RootScope = new CoreScope(this, true);
         _engine = new CompileServiceProviderEngine(this);

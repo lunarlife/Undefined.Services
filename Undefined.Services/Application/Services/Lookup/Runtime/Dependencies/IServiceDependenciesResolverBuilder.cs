@@ -2,6 +2,8 @@ namespace Undefined.Services.Application.Services.Lookup.Runtime.Dependencies;
 
 internal interface IServiceDependenciesResolverBuilder
 {
-    public Action<CoreScope, IService> GetCachedOrCreateResolver(ServiceId serviceId, Type implementationType);
-    public Action<CoreScope, IService> CreateResolverNoCache(ServiceId serviceId, Type implementationType);
+    public bool TryGetCachedOrBuildResolver(ServiceId serviceId, Type implementationType,
+        out Action<CoreScope, IService>? resolverAction);
+    public bool TryBuildResolverNoCache(ServiceId serviceId, Type implementationType,
+        out Action<CoreScope, IService>? resolverAction);
 }

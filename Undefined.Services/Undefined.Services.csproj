@@ -27,4 +27,8 @@
     <ItemGroup>
         <None Include="../LICENSE" Pack="true" PackagePath=""/>
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Lambdas\Declaration\Contexts\" />
+      <Folder Include="Lambdas\Declaration\Methods\" />
+    </ItemGroup>
 </Project>

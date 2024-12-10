@@ -1,12 +1,14 @@
 using Undefined.Services.Lambdas.Abstraction.Methods;
+using Undefined.Services.Lambdas.Abstraction.Methods.Delegators;
 using Undefined.Services.Lambdas.Abstraction.Presentations;
 
 namespace Undefined.Services.Lambdas.Abstraction;
 
 public static class Lambda
 {
-    public static IFunc<T> Func<T>(Func<T> valueFunc)
+    public static Func<TReturn> Func<TReturn>(Func<TReturn> func) 
     {
+        return new Func<TReturn>;
     }
 
     public static IAction<IpT> Action<T>(Action<T> valueFunc)

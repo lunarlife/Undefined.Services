@@ -28,6 +28,7 @@
         <None Include="../LICENSE" Pack="true" PackagePath=""/>
     </ItemGroup>
     <ItemGroup>
+      <Folder Include="Lambdas\Abstraction\Methods\Delegators\" />
       <Folder Include="Lambdas\Declaration\Contexts\" />
       <Folder Include="Lambdas\Declaration\Methods\" />
     </ItemGroup>

@@ -31,7 +31,7 @@ public class _Test
             .DefaultBlock(b => b.Build())
             .Build()).Compile(new RuntimeMethodBodyConstructor());
 
-        IRuntimeValue<bool> value = default;
+        Lambdas.Abstraction.Values.IRuntimeValue<bool> value = default;
         AddTest(value)
     }
 

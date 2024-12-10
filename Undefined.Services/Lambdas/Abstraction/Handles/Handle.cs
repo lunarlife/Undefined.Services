@@ -11,7 +11,7 @@ public readonly struct Handle<TRuntimeType>
         Handleable = handleable;
     }
 
-    public IRuntimeHandle GetHandle() =>
+    public IRuntimeValue GetHandle() =>
 
     public static implicit operator Handle<TRuntimeType>(IRuntimeHandleable<TRuntimeType> value) =>
         new(value);
@@ -19,14 +19,17 @@ public readonly struct Handle<TRuntimeType>
     public static implicit operator Handle<TRuntimeType>(IRuntimeHandleable value) => new(value)
 }
 
-public struct Any<T>
+public struct Handle : IRuntimeValue
 {
-    public T Value { get; }
 
-    public Any(T value)
+    public Handle( )
     {
-        Value = value;
     }
 
-    public static implicit operator Any<T>(T value) => new(value);
+    public static implicit operator Handle(IRuntimeHandleable value) => new(value);
+
+    public static Handle From(Action action)
+    {
+        action.Method.GetBaseDefinition
+    }
 }

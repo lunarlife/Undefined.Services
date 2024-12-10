@@ -1,6 +1,6 @@
 namespace Undefined.Services.Lambdas.Abstraction.Methods;
 
-public interface IParameterBuilder<T>
+public interface IParameterBuilder<TParameters>
 {
-    public Func<T> Builder { get; }
+    public Func<TParameters> Builder { get; }
 }

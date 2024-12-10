@@ -1,3 +1,5 @@
+using Undefined.Services.Lambdas.Abstraction.Methods.Delegators;
+
 namespace Undefined.Services.Lambdas.Abstraction.Methods;
 
 public class QueryEndPoint(IDelegate del) : IQueryEndPoint
@@ -19,7 +21,7 @@ public class QueryCurrent<TCurrent> : IQueryCurrent<TCurrent>
 {
 }
 
-public class QueryNext<TCurrent, TNext>(TNext next, IDelegate finalizer)
+public class QueryNext<TCurrent, TNext>(TNext next, Delegate finalizer)
     : QueryCurrent<TCurrent>, IQueryNext<TCurrent, TNext>
     where TNext : IQueryLink
 {

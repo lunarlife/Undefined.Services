@@ -2,7 +2,7 @@ using Undefined.Services.Lambdas.Abstraction.Presentations;
 
 namespace Undefined.Services.Lambdas.Abstraction.Blocks.Variables;
 
-public interface IVariable : IStorable, IRuntimeDeclarable
+public interface IVariable : IValueContainer, IRuntimeDeclarable
 {
     public string Name { get; }
     public Type VariableType { get; }
